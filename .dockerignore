@@ -1,0 +1,13 @@
+.git
+.gitignore
+.editorconfig
+.vscode
+.gemini
+**/.vs
+**/bin
+**/obj
+**/*.user
+**/*.lock
+**/node_modules
+implementation_plan*.md
+plan

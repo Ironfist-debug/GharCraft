@@ -5,14 +5,18 @@ Week 1: Foundation & Deployment Pipeline (In Progress)
  [x] Baseline domain primitives (Result<T>, Money, Address, AuditableEntity, ISoftDeletable).
  [x] Configure GharCraftDbContext, ASP.NET Core Identity (ApplicationUser, RefreshToken), initial EF Core migration.
  [x] JWT token generation & Auth Controller (/api/v1/auth/login, /register, /refresh).
- [>] Phone+OTP registration & login (Indian-style: send-otp → verify).
+ [x] Phone+OTP registration & login (Indian-style: send-otp → verify).
       - PhoneOtpRecord entity + EF config + migration
       - ISmsService port + ConsoleSmsService (dev stub)
       - SendOtpRequest / VerifyPhoneOtpRequest DTOs + validators
       - AuthService.SendPhoneOtpAsync / VerifyPhoneOtpAsync
       - POST /api/v1/auth/phone/send-otp
       - POST /api/v1/auth/phone/verify
- [ ] Deploy initial API skeleton to staging environment (Railway/Render + Neon PostgreSQL).
+ [x] Deploy initial API skeleton to staging environment (Railway/Render + Neon PostgreSQL).
+      - Multi-stage Dockerfile + .dockerignore
+      - Health check endpoints (/healthz, /readyz) with PostgreSQL check
+      - DataSeeder auto-migration on startup & admin user seeding
+      - railway.json & render.yaml deployment blueprints
 
 Week 2: Catalog Core & Search
  Implement Entities & Configurations: Category, Product, ProductVariant, Collection.
