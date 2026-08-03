@@ -1,4 +1,6 @@
+using GharCraft.Application.Common.Interfaces;
 using GharCraft.Domain.Entities.Identity;
+using GharCraft.Infrastructure.Identity;
 using GharCraft.Infrastructure.Persistence;
 using GharCraft.Infrastructure.Persistence.Interceptors;
 using Microsoft.AspNetCore.DataProtection;
@@ -30,6 +32,8 @@ public static class DependencyInjection
             });
         });
 
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<GharCraftDbContext>());
+
         services.AddIdentityCore<ApplicationUser>(options =>
         {
             options.Password.RequireDigit = true;
@@ -42,6 +46,8 @@ public static class DependencyInjection
         .AddRoles<IdentityRole<Guid>>()
         .AddEntityFrameworkStores<GharCraftDbContext>()
         .AddDefaultTokenProviders();
+
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

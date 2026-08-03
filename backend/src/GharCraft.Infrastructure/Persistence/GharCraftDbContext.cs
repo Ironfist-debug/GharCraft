@@ -1,4 +1,5 @@
 using System.Reflection;
+using GharCraft.Application.Common.Interfaces;
 using GharCraft.Domain.Common;
 using GharCraft.Domain.Entities.Identity;
 using GharCraft.Infrastructure.Persistence.Interceptors;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GharCraft.Infrastructure.Persistence;
 
-public class GharCraftDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class GharCraftDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
 {
     private readonly AuditableEntityInterceptor? _auditableInterceptor;
     private readonly SoftDeleteInterceptor? _softDeleteInterceptor;

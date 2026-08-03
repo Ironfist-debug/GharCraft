@@ -18,6 +18,7 @@ public readonly record struct Error(string Code, string Description, ErrorType T
     public static Error Validation(string code, string description) => new(code, description, ErrorType.Validation);
     public static Error Conflict(string code, string description) => new(code, description, ErrorType.Conflict);
     public static Error Forbidden(string code, string description) => new(code, description, ErrorType.Forbidden);
+    public static Error Unauthorized(string code, string description) => new(code, description, ErrorType.Unauthorized);
 }
 
 public class Result

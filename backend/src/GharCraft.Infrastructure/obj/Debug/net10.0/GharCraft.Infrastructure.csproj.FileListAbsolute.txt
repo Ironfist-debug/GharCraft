@@ -1,0 +1,7 @@
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Infrastructure.deps.json
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Infrastructure.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Infrastructure.pdb
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Application.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Domain.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Application.pdb
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Infrastructure/bin/Debug/net10.0/GharCraft.Domain.pdb
