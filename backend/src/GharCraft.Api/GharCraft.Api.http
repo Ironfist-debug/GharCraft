@@ -1,0 +1,6 @@
+@GharCraft.Api_HostAddress = http://localhost:5062
+
+GET {{GharCraft.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+**/[Bb]in/
+**/[Ob]j/
+**/out/
+**/log/
+**/logs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / Rider / VS Code cache & build files
+.vs/
+.idea/
+.vscode/
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svclog
+*.saved
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment and secrets
+appsettings.Secrets.json
+appsettings.Local.json
+*.env
+*.env.local
+.env.*.local
+
+# Node / Frontend
+**/node_modules/
+**/dist/
+**/build/
+.npm
+.yarn/
+*.log
+
+# Infrastructure / Local storage
+docker/data/
+docker/pgdata/

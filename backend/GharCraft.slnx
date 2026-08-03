@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GharCraft.Api/GharCraft.Api.csproj" />
+    <Project Path="src/GharCraft.Application/GharCraft.Application.csproj" />
+    <Project Path="src/GharCraft.Domain/GharCraft.Domain.csproj" />
+    <Project Path="src/GharCraft.Infrastructure/GharCraft.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GharCraft.IntegrationTests/GharCraft.IntegrationTests.csproj" />
+    <Project Path="tests/GharCraft.UnitTests/GharCraft.UnitTests.csproj" />
+  </Folder>
+</Solution>
