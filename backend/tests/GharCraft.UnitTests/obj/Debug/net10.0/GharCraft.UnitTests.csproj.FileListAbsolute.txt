@@ -117,3 +117,17 @@
 /Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/bin/Debug/net10.0/System.IdentityModel.Tokens.Jwt.dll
 /Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/bin/Debug/net10.0/runtimes/win/lib/net6.0/System.Diagnostics.EventLog.Messages.dll
 /Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/bin/Debug/net10.0/runtimes/win/lib/net6.0/System.Diagnostics.EventLog.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.csproj.AssemblyReference.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.GeneratedMSBuildEditorConfig.editorconfig
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.AssemblyInfoInputs.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.AssemblyInfo.cs
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.csproj.CoreCompileInputs.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraf.913B99BE.Up2Date
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/refint/GharCraft.UnitTests.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.pdb
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/GharCraft.UnitTests.genruntimeconfig.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/obj/Debug/net10.0/ref/GharCraft.UnitTests.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/bin/Debug/net10.0/MockQueryable.Core.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/bin/Debug/net10.0/MockQueryable.EntityFrameworkCore.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.UnitTests/bin/Debug/net10.0/MockQueryable.NSubstitute.dll

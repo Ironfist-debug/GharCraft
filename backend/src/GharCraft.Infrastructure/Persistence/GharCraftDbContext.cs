@@ -26,6 +26,8 @@ public class GharCraftDbContext : IdentityDbContext<ApplicationUser, IdentityRol
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
+    public DbSet<PhoneOtpRecord> PhoneOtpRecords => Set<PhoneOtpRecord>();
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

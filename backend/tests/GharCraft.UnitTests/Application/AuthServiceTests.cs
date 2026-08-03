@@ -6,6 +6,8 @@ using GharCraft.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using MockQueryable.NSubstitute;
 using NSubstitute;
 using Xunit;
 
@@ -18,6 +20,8 @@ public class AuthServiceTests
     private readonly ITokenService _tokenService;
     private readonly IApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ISmsService _smsService;
+    private readonly ILogger<AuthService> _logger;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -29,8 +33,9 @@ public class AuthServiceTests
         _roleManager = Substitute.For<RoleManager<IdentityRole<Guid>>>(roleStore, null, null, null, null);
 
         _tokenService = Substitute.For<ITokenService>();
-
         _context = Substitute.For<IApplicationDbContext>();
+        _smsService = Substitute.For<ISmsService>();
+        _logger = Substitute.For<ILogger<AuthService>>();
 
         var inMemorySettings = new Dictionary<string, string?>
         {
@@ -44,7 +49,14 @@ public class AuthServiceTests
             .AddInMemoryCollection(inMemorySettings)
             .Build();
 
-        _authService = new AuthService(_userManager, _roleManager, _tokenService, _context, _configuration);
+        _authService = new AuthService(
+            _userManager,
+            _roleManager,
+            _tokenService,
+            _context,
+            _configuration,
+            _smsService,
+            _logger);
     }
 
     [Fact]
@@ -80,5 +92,41 @@ public class AuthServiceTests
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("Auth.AdminAccessDenied", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task VerifyPhoneOtpAsync_ShouldReturnUnauthorized_WhenOtpRecordNotFound()
+    {
+        // Arrange
+        var request = new VerifyPhoneOtpRequest("9876543210", "123456", "John", "Doe");
+        var emptyList = new List<PhoneOtpRecord>();
+        var mockSet = emptyList.AsQueryable().BuildMockDbSet();
+        _context.PhoneOtpRecords.Returns(mockSet);
+
+        // Act
+        var result = await _authService.VerifyPhoneOtpAsync(request);
+
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.Equal("Auth.OtpExpiredOrNotFound", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task SendPhoneOtpAsync_ShouldSucceedAndDeliverSms()
+    {
+        // Arrange
+        var request = new SendOtpRequest("9876543210");
+        var emptyList = new List<PhoneOtpRecord>();
+        var mockSet = emptyList.AsQueryable().BuildMockDbSet();
+        _context.PhoneOtpRecords.Returns(mockSet);
+        _smsService.SendOtpAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(true));
+
+        // Act
+        var result = await _authService.SendPhoneOtpAsync(request);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        await _smsService.Received(1).SendOtpAsync("9876543210", Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 }

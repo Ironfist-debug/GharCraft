@@ -3,6 +3,7 @@ using GharCraft.Domain.Entities.Identity;
 using GharCraft.Infrastructure.Identity;
 using GharCraft.Infrastructure.Persistence;
 using GharCraft.Infrastructure.Persistence.Interceptors;
+using GharCraft.Infrastructure.Sms;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,13 +42,18 @@ public static class DependencyInjection
             options.Password.RequireUppercase = true;
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequiredLength = 8;
-            options.User.RequireUniqueEmail = true;
+            // false: phone-only users have no email; we enforce unique email ourselves at the service layer
+            options.User.RequireUniqueEmail = false;
         })
         .AddRoles<IdentityRole<Guid>>()
         .AddEntityFrameworkStores<GharCraftDbContext>()
         .AddDefaultTokenProviders();
 
         services.AddScoped<ITokenService, TokenService>();
+
+        // SMS service — ConsoleSmsService in dev (logs OTP to console).
+        // Replace with Msg91SmsService or Fast2SmsService for production.
+        services.AddScoped<ISmsService, ConsoleSmsService>();
 
         return services;
     }

@@ -3,3 +3,13 @@
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/bin/Debug/net10.0/GharCraft.Application.pdb
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/bin/Debug/net10.0/GharCraft.Domain.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/bin/Debug/net10.0/GharCraft.Domain.pdb
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.csproj.AssemblyReference.cache
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.GeneratedMSBuildEditorConfig.editorconfig
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.AssemblyInfoInputs.cache
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.AssemblyInfo.cs
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.csproj.CoreCompileInputs.cache
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraf.17053C3E.Up2Date
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/refint/GharCraft.Application.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/GharCraft.Application.pdb
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Application/obj/Debug/net10.0/ref/GharCraft.Application.dll

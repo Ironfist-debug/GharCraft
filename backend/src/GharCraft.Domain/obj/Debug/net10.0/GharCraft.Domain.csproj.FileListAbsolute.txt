@@ -1,3 +1,12 @@
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/bin/Debug/net10.0/GharCraft.Domain.deps.json
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/bin/Debug/net10.0/GharCraft.Domain.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/bin/Debug/net10.0/GharCraft.Domain.pdb
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.csproj.AssemblyReference.cache
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.AssemblyInfoInputs.cache
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.AssemblyInfo.cs
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.csproj.CoreCompileInputs.cache
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/refint/GharCraft.Domain.dll
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/GharCraft.Domain.pdb
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Domain/obj/Debug/net10.0/ref/GharCraft.Domain.dll

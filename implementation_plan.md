@@ -1285,59 +1285,120 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mv_bestsellers;
 ### 9.1 Authentication Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   Authentication Flow                        │
-│                                                             │
-│  Customer Login                 Admin Login                  │
-│  ──────────────                ────────────                  │
-│                                                             │
-│  POST /api/v1/auth/login       POST /api/v1/auth/admin/login│
-│  { email, password }           { email, password }          │
-│         │                              │                    │
-│         ▼                              ▼                    │
-│  ┌──────────────┐             ┌──────────────┐              │
-│  │ Validate     │             │ Validate     │              │
-│  │ Credentials  │             │ Credentials  │              │
-│  │ (Identity)   │             │ + Role=Admin │              │
-│  └──────┬───────┘             └──────┬───────┘              │
-│         │                            │                      │
-│         ▼                            ▼                      │
-│  ┌──────────────────────────────────────┐                   │
-│  │       Generate JWT Token Pair        │                   │
-│  │                                      │                   │
-│  │  Access Token  (15 min expiry)       │                   │
-│  │  ┌────────────────────────────┐      │                   │
-│  │  │ Header: { alg, typ }       │      │                   │
-│  │  │ Payload:                   │      │                   │
-│  │  │   sub:   userId (GUID)     │      │                   │
-│  │  │   email: user@email.com    │      │                   │
-│  │  │   role:  "Customer"|"Admin"│  ◀── ONE role claim.     │
-│  │  │   iat, exp, jti            │      No permissions[]    │
-│  │  │ Signature: HMAC-SHA256     │      array (v1.0 had it) │
-│  │  └────────────────────────────┘      │                   │
-│  │                                      │                   │
-│  │  Refresh Token (7 days expiry)       │                   │
-│  │  ┌────────────────────────────┐      │                   │
-│  │  │ Stored in DB (SHA-256)     │      │                   │
-│  │  │ One-time use               │      │                   │
-│  │  │ Rotated on each refresh    │      │                   │
-│  │  │ Revoked-descendant detect  │      │                   │
-│  │  └────────────────────────────┘      │                   │
-│  └──────────────────────────────────────┘                   │
-│                                                             │
-│  Token Refresh: POST /api/v1/auth/refresh                   │
-│  { refreshToken } → new access + refresh pair               │
-│                                                             │
-│  Password Reset: POST /api/v1/auth/forgot-password          │
-│  { email } → time-limited token emailed (1 of only 2 emails)│
-│                                                             │
-│  Email Verify: POST /api/v1/auth/verify-email               │
-│  { token } → marks email verified   (optional at MVP)       │
-│                                                             │
-│  Google Login (Phase 3):                                     │
-│  GET /api/v1/auth/google → OAuth2 redirect flow             │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                        Authentication Flows                          │
+│                                                                      │
+│  ① Email + Password (existing)   ② Phone + OTP (India-first)        │
+│  ──────────────────────────────  ─────────────────────────────────   │
+│                                                                      │
+│  POST /api/v1/auth/login          STEP 1:                            │
+│  { email, password }              POST /api/v1/auth/phone/send-otp   │
+│         │                         { phoneNumber }                    │
+│         │                               │                            │
+│         │                         Generates 6-digit OTP              │
+│         │                         Stores in PhoneOtpRecords (5 min)  │
+│         │                         Sends SMS via ISmsService          │
+│         │                               │                            │
+│         │                         STEP 2:                            │
+│         │                         POST /api/v1/auth/phone/verify     │
+│         │                         { phoneNumber, otp,                │
+│         │                           firstName?, lastName? }          │
+│         │                               │                            │
+│         │                         Verifies OTP (expiry + attempts)   │
+│         │                         If new phone → create account      │
+│         │                         If existing → log in               │
+│         │                         Delete PhoneOtpRecord              │
+│         │                               │                            │
+│         ▼                               ▼                            │
+│  ┌──────────────────────────────────────────┐                        │
+│  │         Generate JWT Token Pair          │                        │
+│  │                                          │                        │
+│  │  Access Token  (15 min expiry)           │                        │
+│  │  ┌──────────────────────────────┐        │                        │
+│  │  │ sub:   userId (GUID)         │        │                        │
+│  │  │ phone: "9876543210" (phone)  │   ◀─── ONE role claim.          │
+│  │  │   OR                         │        No permissions[] array   │
+│  │  │ email: user@email.com (email)│        │                        │
+│  │  │ role:  "Customer"|"Admin"    │        │                        │
+│  │  │ Signature: HMAC-SHA256       │        │                        │
+│  │  └──────────────────────────────┘        │                        │
+│  │                                          │                        │
+│  │  Refresh Token (7 days expiry)           │                        │
+│  │  ┌──────────────────────────────┐        │                        │
+│  │  │ Stored in DB (SHA-256)       │        │                        │
+│  │  │ One-time use + rotation      │        │                        │
+│  │  │ Revoked-descendant detect    │        │                        │
+│  │  └──────────────────────────────┘        │                        │
+│  └──────────────────────────────────────────┘                        │
+│                                                                      │
+│  ③ Admin Login (hardened, separate endpoint)                         │
+│  ─────────────────────────────────────────                           │
+│  POST /api/v1/auth/admin/login                                       │
+│  { email, password } → validates Role = Admin → JWT pair             │
+│  (Admin accounts created only via DataSeeder, never via register)    │
+│                                                                      │
+│  Token Refresh:  POST /api/v1/auth/refresh                           │
+│  Password Reset: POST /api/v1/auth/forgot-password                   │
+│  Email Verify:   POST /api/v1/auth/verify-email  (optional at MVP)   │
+│  Google OAuth:   GET  /api/v1/auth/google         (Phase 3)          │
+└──────────────────────────────────────────────────────────────────────┘
 ```
+
+### 9.4 Phone + OTP Authentication (India-First)
+
+> [!IMPORTANT]
+> OTP authentication is the dominant registration & login pattern in Indian consumer apps (Swiggy, Flipkart, Amazon India, Meesho). Supporting only email+password at launch would create friction for a majority of Indian users.
+
+**Design decisions:**
+
+| Decision | Choice | Reason |
+|----------|--------|---------|
+| OTP length | 6 digits | Industry standard in India |
+| OTP expiry | 5 minutes | Balances UX and security |
+| Max attempts | 3 per OTP | Prevents brute-force on 10^6 space |
+| Storage | `PhoneOtpRecords` DB table | No Redis at MVP; table is small and TTL-purged |
+| SMS provider (dev) | `ConsoleSmsService` — logs to stdout | Zero cost, instant local dev loop |
+| SMS provider (prod) | MSG91 / Fast2SMS (pluggable via `ISmsService`) | Popular Indian providers, ₹0.05–0.15/SMS |
+| Phone format | 10-digit Indian number, `[6-9]\d{9}` | Validates Indian mobile prefixes |
+| UserName (Identity) | Phone number string (phone users) / email (email users) | Identity requires unique UserName |
+| Email for phone users | `null` | `RequireUniqueEmail = false` in Identity options |
+| Flow type | Unified verify endpoint handles both register + login | Same UX pattern as Swiggy/Blinkit |
+
+**PhoneOtpRecord entity:**
+
+```csharp
+public class PhoneOtpRecord : BaseEntity
+{
+    public string PhoneNumber { get; set; }  // "9876543210"
+    public string OtpCode     { get; set; }  // "483921" — plain, 5-min TTL
+    public DateTime ExpiresAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int AttemptCount  { get; set; }   // max 3
+
+    public bool IsValid => DateTime.UtcNow <= ExpiresAt && AttemptCount < 3;
+}
+```
+
+**ISmsService port (Infrastructure-swappable):**
+
+```csharp
+// Application/Common/Interfaces
+public interface ISmsService
+{
+    Task<bool> SendOtpAsync(string phoneNumber, string otp, CancellationToken ct);
+}
+
+// Infrastructure/Sms/ConsoleSmsService  (dev)
+public class ConsoleSmsService : ISmsService  // logs OTP to console
+
+// Infrastructure/Sms/Msg91SmsService    (prod, Phase 2)
+public class Msg91SmsService : ISmsService    // calls MSG91 REST API
+```
+
+**Rate limiting (prevents OTP spam abuse):**
+- `send-otp` endpoint: 3 requests / 10 minutes per IP (global rate limiter middleware)
+- OTP verification: 3 wrong attempts → OTP invalidated; must request a new one
+- A new `send-otp` call to the same number within 1 minute is rejected at the service layer
 
 ### 9.2 Authorization Model — Simplified
 
@@ -1384,6 +1445,7 @@ That is the entire authorization model.
 |-------|---------|--------|----------|
 | Access (JWT) | Client memory / React context — **never `localStorage`** | 15 minutes | On refresh |
 | Refresh | HTTP-only, Secure, `SameSite=Strict` cookie + DB (SHA-256 hashed) | 7 days | Every use (rotation); reuse of a rotated token revokes the whole chain |
+| Phone OTP | `PhoneOtpRecords` DB table | 5 minutes | Max 3 attempts, then invalidated; new `send-otp` required |
 | Email verification | DB | 24 hours | Single use |
 | Password reset | DB | 1 hour | Single use |
 | Razorpay webhook secret | Environment variable (Railway/Render secrets) | — | Manual rotation |
@@ -1554,14 +1616,21 @@ SEO (Public — NEW in v2.0)
   GET    /robots.txt
 
 Authentication (Public)
-  POST   /api/v1/auth/register               # Customer registration
-  POST   /api/v1/auth/login                  # Customer login → JWT pair
-  POST   /api/v1/auth/admin/login            # Admin login → JWT pair
-  POST   /api/v1/auth/refresh                # Rotate tokens
-  POST   /api/v1/auth/logout                 # Revoke refresh token
-  POST   /api/v1/auth/forgot-password        # Request reset (email #2 of 2)
+  # — Email + Password path —
+  POST   /api/v1/auth/register               # Email registration (firstName, lastName, email, password)
+  POST   /api/v1/auth/login                  # Email login → JWT pair
+  POST   /api/v1/auth/forgot-password        # Request password reset (email #2 of 2)
   POST   /api/v1/auth/reset-password         # Reset with token
-  POST   /api/v1/auth/verify-email           # Verify email address
+  POST   /api/v1/auth/verify-email           # Verify email address (optional at MVP)
+
+  # — Phone + OTP path (India-first) —
+  POST   /api/v1/auth/phone/send-otp         # Step 1: generate & SMS a 6-digit OTP
+  POST   /api/v1/auth/phone/verify           # Step 2: verify OTP → register or login
+
+  # — Shared —
+  POST   /api/v1/auth/admin/login            # Admin login (email+password only)
+  POST   /api/v1/auth/refresh                # Rotate JWT pair
+  POST   /api/v1/auth/logout                 # Revoke refresh token
 
 Account (Authenticated — Customer)
   GET    /api/v1/account/profile

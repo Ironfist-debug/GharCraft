@@ -115,3 +115,14 @@
 /Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/bin/Debug/net10.0/Microsoft.IdentityModel.Tokens.dll
 /Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/bin/Debug/net10.0/System.IdentityModel.Tokens.Jwt.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.csproj.AssemblyReference.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.GeneratedMSBuildEditorConfig.editorconfig
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.AssemblyInfoInputs.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.AssemblyInfo.cs
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.csproj.CoreCompileInputs.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraf.E64D4E78.Up2Date
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/refint/GharCraft.IntegrationTests.dll
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.pdb
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/GharCraft.IntegrationTests.genruntimeconfig.cache
+/Users/chinmay/dev/GharCraft/backend/tests/GharCraft.IntegrationTests/obj/Debug/net10.0/ref/GharCraft.IntegrationTests.dll

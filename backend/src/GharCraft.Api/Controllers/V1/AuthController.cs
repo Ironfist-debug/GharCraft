@@ -17,6 +17,8 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    // ── Email + Password ──────────────────────────────────────────────
+
     [HttpPost("register")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -35,6 +37,41 @@ public class AuthController : ControllerBase
         var result = await _authService.LoginAsync(request, ct);
         return result.ToActionResult();
     }
+
+    // ── Phone + OTP (India-first) ─────────────────────────────────────
+
+    /// <summary>
+    /// Step 1: Request a 6-digit OTP to be sent to the given Indian mobile number.
+    /// Works for both new registrations and returning customers.
+    /// Rate limited to 3 requests per 10 minutes per IP.
+    /// </summary>
+    [HttpPost("phone/send-otp")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request, CancellationToken ct)
+    {
+        var result = await _authService.SendPhoneOtpAsync(request, ct);
+        return result.ToActionResult();
+    }
+
+    /// <summary>
+    /// Step 2: Verify the OTP.
+    /// - If the phone number is new → creates an account and returns a JWT pair.
+    /// - If the phone number already exists → logs the user in and returns a JWT pair.
+    /// FirstName and LastName are required only for new registrations.
+    /// </summary>
+    [HttpPost("phone/verify")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> VerifyPhoneOtp([FromBody] VerifyPhoneOtpRequest request, CancellationToken ct)
+    {
+        var result = await _authService.VerifyPhoneOtpAsync(request, ct);
+        return result.ToActionResult();
+    }
+
+    // ── Shared ────────────────────────────────────────────────────────
 
     [HttpPost("admin/login")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]

@@ -8,6 +8,7 @@ using GharCraft.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace GharCraft.Application.Identity.Services;
 
@@ -18,19 +19,29 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ISmsService _smsService;
+    private readonly ILogger<AuthService> _logger;
+
+    private const int OtpExpiryMinutes = 5;
+    private const int OtpMaxAttempts = 3;
+    private const int OtpResendCooldownSeconds = 60;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole<Guid>> roleManager,
         ITokenService tokenService,
         IApplicationDbContext context,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ISmsService smsService,
+        ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
         _context = context;
         _configuration = configuration;
+        _smsService = smsService;
+        _logger = logger;
     }
 
     public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -169,6 +180,139 @@ public class AuthService : IAuthService
         return Result.Success();
     }
 
+    public async Task<Result> SendPhoneOtpAsync(SendOtpRequest request, CancellationToken ct = default)
+    {
+        // Check cooldown: prevent OTP spam to the same number within 60 seconds
+        var existingOtp = await _context.PhoneOtpRecords
+            .FirstOrDefaultAsync(r => r.PhoneNumber == request.PhoneNumber, ct);
+
+        if (existingOtp is not null)
+        {
+            var cooldownExpiry = existingOtp.CreatedAt.AddSeconds(OtpResendCooldownSeconds);
+            if (DateTime.UtcNow < cooldownExpiry)
+            {
+                var waitSeconds = (int)(cooldownExpiry - DateTime.UtcNow).TotalSeconds;
+                return Result.Failure(Error.Conflict(
+                    "Auth.OtpCooldown",
+                    $"Please wait {waitSeconds} seconds before requesting a new OTP."));
+            }
+
+            // Remove stale record — a fresh one will be created
+            _context.PhoneOtpRecords.Remove(existingOtp);
+        }
+
+        // Generate 6-digit OTP
+        var otp = Random.Shared.Next(100_000, 999_999).ToString();
+
+        var record = new PhoneOtpRecord
+        {
+            PhoneNumber = request.PhoneNumber,
+            OtpCode = otp,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(OtpExpiryMinutes),
+            CreatedAt = DateTime.UtcNow,
+            AttemptCount = 0
+        };
+
+        _context.PhoneOtpRecords.Add(record);
+        await _context.SaveChangesAsync(ct);
+
+        var sent = await _smsService.SendOtpAsync(request.PhoneNumber, otp, ct);
+        if (!sent)
+        {
+            _logger.LogWarning("SMS delivery failed for phone {Phone}", request.PhoneNumber);
+            // Do NOT expose delivery failure to the client — prevents phone enumeration
+        }
+
+        return Result.Success();
+    }
+
+    public async Task<Result<AuthResponse>> VerifyPhoneOtpAsync(VerifyPhoneOtpRequest request, CancellationToken ct = default)
+    {
+        var record = await _context.PhoneOtpRecords
+            .FirstOrDefaultAsync(r => r.PhoneNumber == request.PhoneNumber, ct);
+
+        if (record is null || record.IsExpired)
+        {
+            return Result.Failure<AuthResponse>(Error.Unauthorized(
+                "Auth.OtpExpiredOrNotFound",
+                "OTP has expired or was not requested. Please request a new OTP."));
+        }
+
+        if (record.IsExhausted)
+        {
+            return Result.Failure<AuthResponse>(Error.Unauthorized(
+                "Auth.OtpExhausted",
+                "Too many incorrect attempts. Please request a new OTP."));
+        }
+
+        if (record.OtpCode != request.Otp)
+        {
+            record.AttemptCount++;
+            _context.PhoneOtpRecords.Update(record);
+            await _context.SaveChangesAsync(ct);
+
+            var remaining = OtpMaxAttempts - record.AttemptCount;
+            return Result.Failure<AuthResponse>(Error.Unauthorized(
+                "Auth.OtpInvalid",
+                $"Incorrect OTP. {remaining} attempt(s) remaining."));
+        }
+
+        // OTP is correct — clean it up immediately
+        _context.PhoneOtpRecords.Remove(record);
+        await _context.SaveChangesAsync(ct);
+
+        // Find or create the user
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, ct);
+
+        if (user is null)
+        {
+            // New user — name fields required
+            if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName))
+            {
+                return Result.Failure<AuthResponse>(Error.Validation(
+                    "Auth.NameRequired",
+                    "First name and last name are required when registering with a new phone number."));
+            }
+
+            user = new ApplicationUser
+            {
+                UserName = request.PhoneNumber,    // UserName = phone for phone-users
+                PhoneNumber = request.PhoneNumber,
+                PhoneNumberConfirmed = true,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+                // Email is intentionally null for phone-only users
+            };
+
+            var createResult = await _userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
+            {
+                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                return Result.Failure<AuthResponse>(Error.Validation("Auth.RegistrationFailed", errors));
+            }
+
+            var roleName = UserRole.Customer.ToString();
+            if (!await _roleManager.RoleExistsAsync(roleName))
+                await _roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
+
+            await _userManager.AddToRoleAsync(user, roleName);
+        }
+        else if (!user.IsActive)
+        {
+            return Result.Failure<AuthResponse>(Error.Forbidden(
+                "Auth.AccountDisabled",
+                "Your account has been disabled. Please contact support."));
+        }
+
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userManager.UpdateAsync(user);
+
+        return await GenerateAuthResponseAsync(user, ct);
+    }
+
     private async Task<Result<AuthResponse>> GenerateAuthResponseAsync(ApplicationUser user, CancellationToken ct)
     {
         var roles = await _userManager.GetRolesAsync(user);
@@ -194,7 +338,8 @@ public class AuthService : IAuthService
 
         var response = new AuthResponse(
             user.Id,
-            user.Email ?? string.Empty,
+            user.Email,
+            user.PhoneNumber,
             user.FirstName,
             user.LastName,
             roles.ToList(),

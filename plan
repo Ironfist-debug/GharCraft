@@ -1,40 +1,55 @@
 Phase 1 Week-by-Week Execution Plan
+
 Week 1: Foundation & Deployment Pipeline (In Progress)
- Solution & project scaffolding (GharCraft.Domain, Application, Infrastructure, Api, UnitTests, IntegrationTests).
- Baseline domain primitives (Result<T>, Money, Address, AuditableEntity, ISoftDeletable).
- Next: Configure GharCraftDbContext, ASP.NET Core Identity (ApplicationUser, RefreshToken), and initial EF Core migration.
- Implement JWT token generation & Auth Controller (/api/v1/auth/login, /register, /refresh).
- Deploy initial API skeleton to staging environment (Railway/Render + Neon PostgreSQL).
+ [x] Solution & project scaffolding (GharCraft.Domain, Application, Infrastructure, Api, UnitTests, IntegrationTests).
+ [x] Baseline domain primitives (Result<T>, Money, Address, AuditableEntity, ISoftDeletable).
+ [x] Configure GharCraftDbContext, ASP.NET Core Identity (ApplicationUser, RefreshToken), initial EF Core migration.
+ [x] JWT token generation & Auth Controller (/api/v1/auth/login, /register, /refresh).
+ [>] Phone+OTP registration & login (Indian-style: send-otp → verify).
+      - PhoneOtpRecord entity + EF config + migration
+      - ISmsService port + ConsoleSmsService (dev stub)
+      - SendOtpRequest / VerifyPhoneOtpRequest DTOs + validators
+      - AuthService.SendPhoneOtpAsync / VerifyPhoneOtpAsync
+      - POST /api/v1/auth/phone/send-otp
+      - POST /api/v1/auth/phone/verify
+ [ ] Deploy initial API skeleton to staging environment (Railway/Render + Neon PostgreSQL).
+
 Week 2: Catalog Core & Search
  Implement Entities & Configurations: Category, Product, ProductVariant, Collection.
  Repositories & Services for Catalog (ProductService, CategoryService).
  PostgreSQL Full-Text Search integration (tsvector column and trigger).
  REST API endpoints for catalog (/api/v1/categories, /api/v1/products, /api/v1/search).
+
 Week 3: Media Architecture & Storefront Catalog UI
  Cloudflare R2 object storage service (R2FileStorageService).
  Image processing service (ImageSharp for generating WebP/AVIF thumb, medium, large variants).
  Media upload & library API for Admin.
  Connect React/Vite Storefront to Catalog APIs.
+
 Week 4: Cart & Checkout Flow
  Cart and CartItem entities & CartService (guest session support + merge on login).
  Saved user addresses API (/api/v1/account/addresses).
  Storefront Checkout UI (Cart drawer, Address selector, Order review).
+
 Week 5: Payments & Order Processing (Highest Risk Week)
  Order & OrderItem entities with server-side price re-verification.
  Razorpay API integration (RazorpayGateway).
  Webhook signature verification handler (/api/v1/webhooks/razorpay).
  Order confirmation email background notification (EmailService).
  Stock reservation & inventory deduction logic.
+
 Week 6: Admin Business Management Panel
  Admin layout & Auth guard.
  Admin CRUD screens for Products, Categories, Inventory, Orders, Media, and Storefront settings.
+
 Week 7: SEO & Performance Pass
  Server-Side Rendering (SSR) / prerender pipeline for product pages.
  JSON-LD structured data generation (Product, BreadcrumbList, Organization).
  sitemap.xml & robots.txt endpoints.
- Output Caching & HTTP header optimizations (Target: Lighthouse ≥ 90).
+ Output Caching & HTTP header optimizations (Target: Lighthouse >= 90).
+
 Week 8: Hardening & Launch
  Security audit (OWASP Top 10 checklist execution).
  Database backup & point-in-time restore rehearsal.
- Real ₹1 transaction test on Razorpay Live mode.
- PRODUCTION LAUNCH 🚀
+ Real Rs.1 transaction test on Razorpay Live mode.
+ PRODUCTION LAUNCH
