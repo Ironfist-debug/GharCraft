@@ -6,11 +6,8 @@ using GharCraft.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 // Dynamic PORT binding for Railway / Render
-var port = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrEmpty(port))
-{
-    builder.WebHost.UseUrls($"http://*:{port}");
-}
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://+:{port}");
 
 // Services
 builder.Services.AddApplication();
@@ -20,19 +17,13 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Health checks — PostgreSQL connectivity via DbContext
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<GharCraftDbContext>("db");
-
 var app = builder.Build();
 
-// ── Health check endpoints (must be FIRST, before any auth middleware) ──────
-// /healthz → fast liveness probe (no DB call) — used by Railway container
-// /readyz  → readiness probe (checks DB connectivity)
+// ── 1. Health check (FIRST — before everything else) ────────────────────────
+// Simple 200 OK — no DB dependency so Railway liveness probe always passes.
 app.MapGet("/healthz", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
-app.MapHealthChecks("/readyz");
 
-// ── Database migration & seeding ────────────────────────────────────────────
+// ── 2. Database migration & seeding ─────────────────────────────────────────
 try
 {
     await DataSeeder.SeedDatabaseAsync(app.Services, app.Configuration);
@@ -40,11 +31,10 @@ try
 catch (Exception ex)
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "Database seeding/migration failed on startup.");
-    // Do NOT throw — allow app to stay up so /healthz still passes
+    logger.LogError(ex, "Database seeding/migration failed on startup — app will continue.");
 }
 
-// ── Swagger (Dev + Staging) ──────────────────────────────────────────────────
+// ── 3. Swagger (Dev + Staging) ───────────────────────────────────────────────
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging() ||
     app.Configuration.GetValue<bool>("EnableSwagger"))
 {
@@ -56,12 +46,10 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging() ||
     });
 }
 
-// NOTE: No UseHttpsRedirection — Railway/Render terminate TLS at the load balancer.
-//       Adding it would cause redirect loops and break health checks.
+// NOTE: No UseHttpsRedirection — Railway terminates TLS at the load balancer.
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

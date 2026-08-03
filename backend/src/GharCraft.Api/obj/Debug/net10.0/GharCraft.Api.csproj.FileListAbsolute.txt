@@ -117,9 +117,9 @@
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/obj/Debug/net10.0/GharCraft.Api.pdb
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/obj/Debug/net10.0/GharCraft.Api.genruntimeconfig.cache
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/obj/Debug/net10.0/ref/GharCraft.Api.dll
-/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/bin/Debug/net10.0/Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/bin/Debug/net10.0/Microsoft.OpenApi.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.Swagger.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerUI.dll
 /Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/obj/Debug/net10.0/GharCraft.Api.MvcApplicationPartsAssemblyInfo.cs
+/Users/chinmay/dev/GharCraft/backend/src/GharCraft.Api/obj/Debug/net10.0/GharCraft.Api.sourcelink.json

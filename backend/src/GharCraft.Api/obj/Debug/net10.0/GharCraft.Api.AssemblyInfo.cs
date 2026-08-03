@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GharCraft.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1be639bc40480efbeb4a675af7eb0edd62c9541a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+57c7023378e17c87685d2988fc70d38045fee7f6")]
 [assembly: System.Reflection.AssemblyProductAttribute("GharCraft.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GharCraft.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
