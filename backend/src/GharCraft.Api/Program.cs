@@ -5,9 +5,12 @@ using GharCraft.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Dynamic PORT binding for Railway / Render
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://+:{port}");
+// Dynamic PORT binding for Railway / Render (Only override if PORT is provided)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://+:{port}");
+}
 
 // Services
 builder.Services.AddApplication();
