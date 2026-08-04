@@ -12,7 +12,7 @@ public class PhoneOtpRecord : BaseEntity
     /// <summary>Indian mobile number in E.164 format without country code, e.g. "9876543210"</summary>
     public string PhoneNumber { get; set; } = string.Empty;
 
-    /// <summary>6-digit OTP code (stored in plain text — 5 minute TTL makes hashing overkill).</summary>
+    /// <summary>SHA-256 hex digest of the 6-digit OTP. Never store the raw code.</summary>
     public string OtpCode { get; set; } = string.Empty;
 
     public DateTime ExpiresAt { get; set; }

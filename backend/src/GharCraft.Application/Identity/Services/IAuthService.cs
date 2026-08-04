@@ -12,7 +12,16 @@ public interface IAuthService
 
     // ── Token lifecycle ───────────────────────────────────────────────
     Task<Result<AuthResponse>> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken ct = default);
-    Task<Result> RevokeTokenAsync(string refreshToken, CancellationToken ct = default);
+    Task<Result> RevokeTokenAsync(string refreshToken, Guid userId, CancellationToken ct = default);
+
+    // ── Password reset ────────────────────────────────────────────────
+    /// <summary>
+    /// Sends a password-reset email if the address exists.
+    /// Always returns success to avoid email enumeration.
+    /// </summary>
+    Task<Result> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken ct = default);
+
+    Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
 
     // ── Phone + OTP (India-first) ─────────────────────────────────────
     /// <summary>Step 1: generate and deliver a 6-digit OTP to the given phone number.</summary>

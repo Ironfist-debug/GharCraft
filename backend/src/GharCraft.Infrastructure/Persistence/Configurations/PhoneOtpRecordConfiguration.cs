@@ -16,9 +16,10 @@ public class PhoneOtpRecordConfiguration : IEntityTypeConfiguration<PhoneOtpReco
             .IsRequired()
             .HasMaxLength(15);
 
+        // Stored as SHA-256 hex digest → exactly 64 characters.
         builder.Property(x => x.OtpCode)
             .IsRequired()
-            .HasMaxLength(6);
+            .HasMaxLength(64);
 
         builder.Property(x => x.ExpiresAt).IsRequired();
         builder.Property(x => x.CreatedAt).IsRequired();

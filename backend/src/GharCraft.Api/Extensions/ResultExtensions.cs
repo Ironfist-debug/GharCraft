@@ -17,20 +17,21 @@ public static class ResultExtensions
 
     private static IActionResult MatchError(Error error)
     {
-        var problemDetails = new ProblemDetails
-        {
-            Title = error.Code,
-            Detail = error.Description
-        };
-
         return error.Type switch
         {
-            ErrorType.NotFound => new NotFoundObjectResult(problemDetails),
-            ErrorType.Validation => new BadRequestObjectResult(problemDetails),
-            ErrorType.Conflict => new ConflictObjectResult(problemDetails),
-            ErrorType.Unauthorized => new UnauthorizedObjectResult(problemDetails),
-            ErrorType.Forbidden => new ObjectResult(problemDetails) { StatusCode = StatusCodes.Status403Forbidden },
-            _ => new BadRequestObjectResult(problemDetails)
+            ErrorType.NotFound => new NotFoundObjectResult(Problem(error, StatusCodes.Status404NotFound)),
+            ErrorType.Validation => new BadRequestObjectResult(Problem(error, StatusCodes.Status400BadRequest)),
+            ErrorType.Conflict => new ConflictObjectResult(Problem(error, StatusCodes.Status409Conflict)),
+            ErrorType.Unauthorized => new UnauthorizedObjectResult(Problem(error, StatusCodes.Status401Unauthorized)),
+            ErrorType.Forbidden => new ObjectResult(Problem(error, StatusCodes.Status403Forbidden)) { StatusCode = StatusCodes.Status403Forbidden },
+            _ => new BadRequestObjectResult(Problem(error, StatusCodes.Status400BadRequest))
         };
     }
+
+    private static ProblemDetails Problem(Error error, int status) => new()
+    {
+        Title = error.Code,
+        Detail = error.Description,
+        Status = status
+    };
 }

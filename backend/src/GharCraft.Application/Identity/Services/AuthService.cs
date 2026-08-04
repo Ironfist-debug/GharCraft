@@ -20,6 +20,7 @@ public class AuthService : IAuthService
     private readonly IApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ISmsService _smsService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
 
     private const int OtpExpiryMinutes = 5;
@@ -33,6 +34,7 @@ public class AuthService : IAuthService
         IApplicationDbContext context,
         IConfiguration configuration,
         ISmsService smsService,
+        IEmailService emailService,
         ILogger<AuthService> logger)
     {
         _userManager = userManager;
@@ -41,6 +43,7 @@ public class AuthService : IAuthService
         _context = context;
         _configuration = configuration;
         _smsService = smsService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -89,11 +92,21 @@ public class AuthService : IAuthService
             return Result.Failure<AuthResponse>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));
         }
 
+        if (await _userManager.IsLockedOutAsync(user))
+        {
+            return Result.Failure<AuthResponse>(Error.Unauthorized(
+                "Auth.AccountLocked",
+                "Account is temporarily locked due to too many failed attempts. Please try again later."));
+        }
+
         var isValidPassword = await _userManager.CheckPasswordAsync(user, request.Password);
         if (!isValidPassword)
         {
+            await _userManager.AccessFailedAsync(user);
             return Result.Failure<AuthResponse>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));
         }
+
+        await _userManager.ResetAccessFailedCountAsync(user);
 
         user.LastLoginAt = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
@@ -109,11 +122,21 @@ public class AuthService : IAuthService
             return Result.Failure<AuthResponse>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));
         }
 
+        if (await _userManager.IsLockedOutAsync(user))
+        {
+            return Result.Failure<AuthResponse>(Error.Unauthorized(
+                "Auth.AccountLocked",
+                "Account is temporarily locked due to too many failed attempts. Please try again later."));
+        }
+
         var isValidPassword = await _userManager.CheckPasswordAsync(user, request.Password);
         if (!isValidPassword)
         {
+            await _userManager.AccessFailedAsync(user);
             return Result.Failure<AuthResponse>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid email or password."));
         }
+
+        await _userManager.ResetAccessFailedCountAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains(UserRole.Admin.ToString()))
@@ -149,8 +172,9 @@ public class AuthService : IAuthService
             return Result.Failure<AuthResponse>(Error.Unauthorized("Auth.UserNotFound", "User account is inactive or not found."));
         }
 
+        var hash = HashToken(request.RefreshToken);
         var storedRefreshToken = await _context.RefreshTokens
-            .FirstOrDefaultAsync(t => t.Token == request.RefreshToken && t.UserId == userId, ct);
+            .FirstOrDefaultAsync(t => t.Token == hash && t.UserId == userId, ct);
 
         if (storedRefreshToken is null || !storedRefreshToken.IsActive)
         {
@@ -165,12 +189,18 @@ public class AuthService : IAuthService
         return await GenerateAuthResponseAsync(user, ct);
     }
 
-    public async Task<Result> RevokeTokenAsync(string refreshToken, CancellationToken ct = default)
+    public async Task<Result> RevokeTokenAsync(string refreshToken, Guid userId, CancellationToken ct = default)
     {
-        var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == refreshToken, ct);
+        var hash = HashToken(refreshToken);
+        var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == hash, ct);
         if (storedToken is null)
         {
             return Result.Failure(Error.NotFound("Auth.TokenNotFound", "Refresh token not found."));
+        }
+
+        if (storedToken.UserId != userId)
+        {
+            return Result.Failure(Error.Forbidden("Auth.Forbidden", "You do not have permission to revoke this token."));
         }
 
         storedToken.IsRevoked = true;
@@ -202,12 +232,13 @@ public class AuthService : IAuthService
         }
 
         // Generate 6-digit OTP
-        var otp = Random.Shared.Next(100_000, 999_999).ToString();
+        var otp = System.Security.Cryptography.RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString("D6");
+        var otpHash = HashOtp(otp);
 
         var record = new PhoneOtpRecord
         {
             PhoneNumber = request.PhoneNumber,
-            OtpCode = otp,
+            OtpCode = otpHash,
             ExpiresAt = DateTime.UtcNow.AddMinutes(OtpExpiryMinutes),
             CreatedAt = DateTime.UtcNow,
             AttemptCount = 0
@@ -245,7 +276,8 @@ public class AuthService : IAuthService
                 "Too many incorrect attempts. Please request a new OTP."));
         }
 
-        if (record.OtpCode != request.Otp)
+        var incoming = HashOtp(request.Otp);
+        if (record.OtpCode != incoming)
         {
             record.AttemptCount++;
             _context.PhoneOtpRecords.Update(record);
@@ -313,11 +345,72 @@ public class AuthService : IAuthService
         return await GenerateAuthResponseAsync(user, ct);
     }
 
+    public async Task<Result> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken ct = default)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+
+        // Always return success — never reveal whether an email is registered
+        if (user is null || !user.IsActive)
+        {
+            _logger.LogInformation("Password reset requested for unknown/inactive email: {Email}", request.Email);
+            return Result.Success();
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+
+        var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
+        var resetLink = $"{frontendBaseUrl}/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
+
+        try
+        {
+            await _emailService.SendPasswordResetEmailAsync(user.Email!, resetLink, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
+            return Result.Failure(Error.Failure("Email.SendFailed", "Failed to send password reset email. Please try again."));
+        }
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user is null || !user.IsActive)
+        {
+            return Result.Failure(Error.Validation("Auth.InvalidToken", "Password reset link is invalid or has expired."));
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            var description = result.Errors.FirstOrDefault()?.Description
+                ?? "Password reset link is invalid or has expired.";
+            return Result.Failure(Error.Validation("Auth.InvalidToken", description));
+        }
+
+        // Revoke all existing refresh tokens — fresh login required after password reset
+        var tokens = await _context.RefreshTokens
+            .Where(t => t.UserId == user.Id && !t.IsRevoked)
+            .ToListAsync(ct);
+
+        foreach (var t in tokens)
+            t.IsRevoked = true;
+
+        await _context.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Password reset completed for user {UserId}", user.Id);
+        return Result.Success();
+    }
+
     private async Task<Result<AuthResponse>> GenerateAuthResponseAsync(ApplicationUser user, CancellationToken ct)
     {
         var roles = await _userManager.GetRolesAsync(user);
         var (accessToken, expiresAt, jwtId) = _tokenService.GenerateAccessToken(user, roles);
         var refreshTokenValue = _tokenService.GenerateRefreshToken();
+        var tokenHash = HashToken(refreshTokenValue);
 
         var refreshDays = int.TryParse(_configuration["Jwt:RefreshTokenExpirationDays"], out var days) ? days : 7;
 
@@ -325,7 +418,7 @@ public class AuthService : IAuthService
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            Token = refreshTokenValue,
+            Token = tokenHash,
             JwtId = jwtId,
             IsUsed = false,
             IsRevoked = false,
@@ -350,4 +443,11 @@ public class AuthService : IAuthService
 
         return Result.Success(response);
     }
+    private static string HashToken(string token)
+    {
+        var bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    private static string HashOtp(string otp) => HashToken(otp);
 }

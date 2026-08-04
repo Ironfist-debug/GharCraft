@@ -1,5 +1,6 @@
 using GharCraft.Application.Common.Interfaces;
 using GharCraft.Domain.Entities.Identity;
+using GharCraft.Infrastructure.Email;
 using GharCraft.Infrastructure.Identity;
 using GharCraft.Infrastructure.Persistence;
 using GharCraft.Infrastructure.Persistence.Interceptors;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Resend;
 
 namespace GharCraft.Infrastructure;
 
@@ -43,6 +45,9 @@ public static class DependencyInjection
             options.Password.RequiredLength = 8;
             // false: phone-only users have no email; we enforce unique email ourselves at the service layer
             options.User.RequireUniqueEmail = false;
+            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })
         .AddRoles<IdentityRole<Guid>>()
         .AddEntityFrameworkStores<GharCraftDbContext>()
@@ -53,6 +58,20 @@ public static class DependencyInjection
         // SMS service — ConsoleSmsService in dev (logs OTP to console).
         // Replace with Msg91SmsService or Fast2SmsService for production.
         services.AddScoped<ISmsService, ConsoleSmsService>();
+
+        // Email service — falls back to ConsoleEmailService when Resend:ApiKey is not configured.
+        var resendApiKey = configuration["Resend:ApiKey"];
+        if (!string.IsNullOrWhiteSpace(resendApiKey))
+        {
+            services.AddOptions<ResendClientOptions>().Configure(o => o.ApiToken = resendApiKey);
+            services.AddHttpClient<ResendClient>();
+            services.AddTransient<IResend, ResendClient>();
+            services.AddScoped<IEmailService, ResendEmailService>();
+        }
+        else
+        {
+            services.AddScoped<IEmailService, ConsoleEmailService>();
+        }
 
         return services;
     }

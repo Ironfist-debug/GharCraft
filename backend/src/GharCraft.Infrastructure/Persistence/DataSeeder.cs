@@ -36,9 +36,16 @@ public static class DataSeeder
             }
         }
 
-        // 3. Seed initial Admin user if specified in config or fallback
+        // 3. Seed initial Admin user from configuration (required — no fallback password)
         var adminEmail = configuration["AdminSeed:Email"] ?? "admin@gharcraft.com";
-        var adminPassword = configuration["AdminSeed:Password"] ?? "Admin@GharCraft2026!";
+        var adminPassword = configuration["AdminSeed:Password"];
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            logger.LogWarning(
+                "AdminSeed:Password is not configured — skipping admin user seed. " +
+                "Set AdminSeed:Password in appsettings.Local.json or as an environment variable.");
+            return;
+        }
 
         var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
         if (existingAdmin is null)

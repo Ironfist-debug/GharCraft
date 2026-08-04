@@ -10,8 +10,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
     {
         builder.HasKey(t => t.Id);
 
+        // Stored as SHA-256 hex digest → exactly 64 characters.
         builder.Property(t => t.Token)
-            .HasMaxLength(256)
+            .HasMaxLength(64)
             .IsRequired();
 
         builder.Property(t => t.JwtId)

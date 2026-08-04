@@ -21,6 +21,7 @@ public class AuthServiceTests
     private readonly IApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ISmsService _smsService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<AuthService> _logger;
     private readonly AuthService _authService;
 
@@ -35,6 +36,7 @@ public class AuthServiceTests
         _tokenService = Substitute.For<ITokenService>();
         _context = Substitute.For<IApplicationDbContext>();
         _smsService = Substitute.For<ISmsService>();
+        _emailService = Substitute.For<IEmailService>();
         _logger = Substitute.For<ILogger<AuthService>>();
 
         var inMemorySettings = new Dictionary<string, string?>
@@ -56,6 +58,7 @@ public class AuthServiceTests
             _context,
             _configuration,
             _smsService,
+            _emailService,
             _logger);
     }
 

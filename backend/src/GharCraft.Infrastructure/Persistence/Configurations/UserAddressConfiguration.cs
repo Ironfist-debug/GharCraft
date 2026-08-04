@@ -41,7 +41,6 @@ public class UserAddressConfiguration : IEntityTypeConfiguration<UserAddress>
             .HasMaxLength(100)
             .HasDefaultValue("India")
             .IsRequired();
-
-        builder.HasQueryFilter(a => !a.IsDeleted);
+        // Soft-delete query filter is applied globally in GharCraftDbContext.OnModelCreating.
     }
 }
