@@ -18,6 +18,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email address is required.")
             .EmailAddress().WithMessage("A valid email address is required.")
+            .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("A valid email format is required.")
             .MaximumLength(256).WithMessage("Email address must not exceed 256 characters.");
 
         RuleFor(x => x.Password)

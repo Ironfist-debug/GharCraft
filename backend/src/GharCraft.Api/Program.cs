@@ -3,6 +3,8 @@ using GharCraft.Application;
 using GharCraft.Infrastructure;
 using GharCraft.Infrastructure.Persistence;
 
+using FluentValidation.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Dynamic PORT binding for Railway / Render (Only override if PORT is provided)
@@ -17,6 +19,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
